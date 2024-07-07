@@ -1,0 +1,120 @@
+import re
+import json
+
+resume_text = """
+ADABALA HEMA SRINIVAS
+srinivas04349@gmail.com
++91 7013919558
+LinkedIn
+Github
+
+SKILLS SUMMARY
+Languages: Python, SQL, CPP
+Frameworks: Pandas, Numpy, Scikit-Learn, Matplotlib, YOLO, NLP
+Tools: Power BI, Advanced Excel, PowerPoint, Tableau, MySQL
+Platforms: PyCharm, Jupyter Notebook, Visual Studio Code
+Soft Skills: Rapport Building, Strong Stakeholder Management, Storytelling, Excellent communication, Leadership
+
+PROJECTS
+
+Smart Traffic Management System (December 2023 - February 2024)
+- Engineered a cutting-edge system to combat urban congestion using real-time data from CCTV cameras. Employed state-of-the-art Computer Vision and Object Detection algorithms, including YOLO, to accurately assess traffic density.
+- Crafted an intelligent algorithm to adjust traffic signal timings based on live vehicle density dynamically, minimizing delays and enhancing overall transit efficiency.
+- Python and OpenCV were instrumental in algorithm development, ensuring seamless integration with existing infrastructure.
+- Through Pygame-powered simulations, vividly illustrated the transformative impact of adaptive signal control, paving the way for smarter, smoother urban mobility.
+- Achieved a 20% decrease in virtual traffic congestion within the simulated environment, demonstrating the system's effectiveness in managing traffic flow.
+
+Social Media Fraud Detection (September 2023 - October 2023)
+- Tackled the rising tide of fake profiles inundating social media platforms, developing a robust system to distinguish between genuine and fraudulent accounts.
+- Leveraged advanced machine learning techniques such as Extreme Gradient Boosting (XGBoost) and Adaboost, analyzed diverse features including engagement rates and behavioral patterns to identify suspicious accounts.
+- Implemented comprehensive comparative analyses, evaluating the efficacy of different algorithms based on model accuracy, precision, and recall.
+
+Customer Lifetime Value Prediction And Segmentation (July 2023 - August 2023)
+- Utilized advanced machine learning models and predictive analytics to predict CLTV and segment customers effectively, using techniques such as RFM segmentation to extract actionable insights from sales data, driving strategic marketing initiatives.
+- Machine learning algorithms like Linear Regression and Random Forest were used to accurately forecast CLTV and segment customers based on their value.
+- Increased CLTV prediction accuracy by 25% compared to traditional methods, leading to a more accurate understanding of customer value.
+
+WORK EXPERIENCE
+
+DATA ANALYST INTERN (virtual) | PwC (January 2024 - March 2024)
+- Recognized the need to analyze HR data, particularly gender-related KPIs, to address gender balance issues at the executive management level.
+- Leveraged SQL queries to extract and transform raw data from relational databases, ensuring data integrity for subsequent analysis.
+- Utilized advanced Excel functions for preprocessing tasks, including data cleaning and exploratory analysis, before transitioning to Power BI for visualization.
+- Developed interactive Power BI dashboards that effectively conveyed KPIs, showcasing gender balance trends and highlighting areas for improvement.
+
+CERTIFICATES
+
+Programming in Python (Meta) (March 2023)
+- Mastered fundamental Python syntax, proficiently utilizing control flow, loops, functions, and data structures.
+- Acquired expertise in procedural programming paradigms and associated logical concepts, enhancing capabilities.
+
+Introduction to Machine Learning (Stanford) (March 2023)
+- Developed a deeper comprehension of various machine learning algorithms and models, including supervised and unsupervised learning techniques.
+"""
+
+def parse_resume(resume):
+    resume_json = {}
+    
+    # Extract personal info
+    personal_info_pattern = r"(.*)\n(.*@.*)\n(\+\d{2} \d{10})"
+    personal_info_match = re.search(personal_info_pattern, resume)
+    if personal_info_match:
+        resume_json["name"] = personal_info_match.group(1).strip()
+        resume_json["email"] = personal_info_match.group(2).strip()
+        resume_json["phone"] = personal_info_match.group(3).strip()
+    
+    # Extract skills
+    skills_pattern = r"SKILLS SUMMARY\n(.*?)(?=\n\n|\nPROJECTS)"
+    skills_match = re.search(skills_pattern, resume, re.DOTALL)
+    if skills_match:
+        skills_text = skills_match.group(1).strip().split('\n')
+        skills = {line.split(': ')[0]: line.split(': ')[1].split(', ') for line in skills_text}
+        resume_json["skills_summary"] = skills
+
+    # Extract projects
+    projects_pattern = r"PROJECTS\n(.*?)(?=\n\n|\nWORK EXPERIENCE)"
+    projects_match = re.search(projects_pattern, resume, re.DOTALL)
+    if projects_match:
+        projects_text = projects_match.group(1).strip().split('\n\n')
+        projects = []
+        for project in projects_text:
+            project_lines = project.split('\n')
+            project_title = project_lines[0].split(' (')[0].strip()
+            project_duration = project_lines[0].split(' (')[1].strip(')')
+            project_desc = [line.strip('- ') for line in project_lines[1:]]
+            projects.append({"name": project_title, "duration": project_duration, "description": project_desc})
+        resume_json["projects"] = projects
+
+    # Extract work experience
+    work_pattern = r"WORK EXPERIENCE\n(.*?)(?=\n\n|\nCERTIFICATES)"
+    work_match = re.search(work_pattern, resume, re.DOTALL)
+    if work_match:
+        work_text = work_match.group(1).strip().split('\n\n')
+        work_experience = []
+        for work in work_text:
+            work_lines = work.split('\n')
+            work_title = work_lines[0].split(' | ')[0].strip()
+            work_company = work_lines[0].split(' | ')[1].split(' (')[0].strip()
+            work_duration = work_lines[0].split(' (')[1].strip(')')
+            work_desc = [line.strip('- ') for line in work_lines[1:]]
+            work_experience.append({"position": work_title, "company": work_company, "duration": work_duration, "description": work_desc})
+        resume_json["work_experience"] = work_experience
+
+    # Extract certificates
+    certificates_pattern = r"CERTIFICATES\n(.*)"
+    certificates_match = re.search(certificates_pattern, resume, re.DOTALL)
+    if certificates_match:
+        certificates_text = certificates_match.group(1).strip().split('\n\n')
+        certificates = []
+        for cert in certificates_text:
+            cert_lines = cert.split('\n')
+            cert_title = cert_lines[0].strip()
+            cert_date = cert_lines[1].strip(' ()')
+            cert_desc = [line.strip('- ') for line in cert_lines[2:]]
+            certificates.append({"name": cert_title, "date": cert_date, "description": cert_desc})
+        resume_json["certificates"] = certificates
+
+    return resume_json
+
+resume_json = parse_resume(resume_text)
+print(json.dumps(resume_json, indent=4))
